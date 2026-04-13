@@ -1,0 +1,829 @@
+# Contracts
+
+The list of contracts to index for this indexer.
+
+:::info
+You can have multiple contracts in an indexer.
+:::
+
+## name
+
+This is the name of the contract to index, it will use this name on the database on tables it generates, alongside
+on generated rust code if you are using the rust project.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+   - name: RocketPoolETH // [!code focus]
+```
+
+## details
+
+The details for the contract mapping to the network and contract address.
+
+### network
+
+The network name to listen for events on, this should match the network name in the networks section of the YAML.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum // [!code focus]
+```
+
+### address
+
+:::info
+The address or addresses of the contract or contracts to listen for events on.
+Only one of `address`, `filter` or `factory` can be provided for a given contract details.
+:::
+
+The contract address to listen for events on.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393" // [!code focus]
+```
+
+To listen to many contract addresses you can provide an array of addresses.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address:
+          - "0xae78736cd615f374d3085123a210448e74fc6393" // [!code focus]
+          - "0x2FD5c1659A82E87217DF254f3D4b71A22aE43eE1" // [!code focus]
+```
+
+### filter
+
+:::info
+Only one of `address`, `filter` or `factory` can be provided for a given contract details.
+:::
+
+If you wish to filter based on events only for example you want all transfer events from all contracts you can use the
+filter.
+
+:::warning
+You currently cannot mix and match address and filter within the same contract definition.
+This means if you want to index on a filter and with the same contract definition index on
+an address you will need to do 2 different contract definitions in the yaml file.
+:::
+
+#### event_name
+
+The event name to filter on, it must match the ABI event name.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: ERC20Transfer
+    details:
+      - network: ethereum
+        filter: // [!code focus]
+          event_name: Transfer // [!code focus]
+```
+
+#### Index more then 1 filter for the contract
+
+You can just pass in an array of events names to index on the filter.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: ERC20 // [!code focus]
+    details:
+      - network: ethereum
+        filter: // [!code focus]
+          - event_name: Transfer // [!code focus]
+          - event_name: Approval // [!code focus]
+```
+
+### factory
+
+:::info
+Only one of `address`, `filter` or `factory` can be provided for a given contract details.
+:::
+
+Some contracts are deployed through the factory contract (e.g. Uniswap V3). If you wish to track events only from factory-deployed addresses use `factory` filter.
+
+:::warning
+Factory filter requires to specify events which should be included when indexing through `include_events` property on the contract.
+:::
+
+#### name
+
+The name of the factory contract to index.
+
+#### address
+
+The factory contract address to listen for events on. To listen to many factory contract addresses, you can provide an array of addresses.
+
+#### abi
+
+The ABI of the contract is pointing to the JSON file in the repository. It can be a relative path or a full path.
+
+#### event_name
+
+The event name to filter on, it must match the ABI event name.
+
+#### input_name
+
+The path to the factory-deployed contract address in the event inputs. Supports deep property access in case of complex event types: `pool.address`.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: UniswapV3Pool
+    details:
+      - network: ethereum
+        factory: // [!code focus]
+          name: UniswapV3Factory // [!code focus]
+          address: 0x1F98431c8aD98523631AE4a59f267346ea31F984 // [!code focus]
+          abi: ./abis/UniswapV3Factory.abi.json // [!code focus]
+          event_name: PoolCreated // [!code focus]
+          input_name: "pool" // [!code focus]
+```
+
+If a factory deploys more than one contract in a single event, an array of inputs can be provided to track multiple factory-deployed addresses.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: UniswapV3Pool
+    details:
+      - network: ethereum
+        factory: // [!code focus]
+          name: UniswapV3Factory // [!code focus]
+          address: 0x1F98431c8aD98523631AE4a59f267346ea31F984 // [!code focus]
+          abi: ./abis/UniswapV3Factory.abi.json // [!code focus]
+          event_name: PoolCreated // [!code focus]
+          input_name: // [!code focus]
+            - "token0" // [!code focus]
+            - "token1" // [!code focus]
+```
+
+:::info
+For factories that deploy a high volume of contracts, consider optimizing event fetching logic to enhance indexing performance.
+For detailed implementation guidance, refer to the [network configuration documentation](/docs/start-building/yaml-config/networks#get_logs_settings) settings.
+:::
+
+### indexed_1, indexed_2, indexed_3
+
+:::info
+This is optional and can be used on both address and filter.
+:::
+
+Indexed means that these values will be stored in the topics field rather than the data field when the event gets fired off
+and you can filter these out on the JSONRPC side so you only get the events you want.
+
+In EVM you can have up to 3 indexed fields to filter on. The indexed 1,2,3 are based on the order they emitted in the event.
+So if you have 3 indexed fields in the event you can filter on all 3 or 2 or 1 of them in any direction. Indexed fields are arrays so
+you can filter many values in the indexed fields, the arrays are `OR` not `AND` filtering.
+
+example ABI:
+
+```json
+{
+    "anonymous":false,
+    "inputs":[
+      {
+        "indexed":true, // [!code focus]
+        "internalType":"address",
+        "name":"owner",
+        "type":"address"
+      },
+      {
+        "indexed":true, // [!code focus]
+        "internalType":"address",
+        "name":"spender",
+        "type":"address"
+      },
+      {
+        "indexed":false, // [!code focus]
+        "internalType":"uint256",
+        "name":"value",
+        "type":"uint256"
+      }
+    ],
+    "name":"Approval", // [!code focus]
+    "type":"event"
+}
+```
+
+So this ABI says that the inputs `owner` and `spender` are indexed and can be filtered on. `value` is not
+indexed so you can not filter on it.
+
+For example if you wanted to get all the approvals for rETH for owner `0xd87b8e0db0cf9cbf9963c035a6ad72d614e37fd5`
+and `0x0338ce5020c447f7e668dc2ef778025ce398266b` you could set the indexed filters like so:
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+   - name: RocketPoolETH
+     details:
+       - network: ethereum
+         address: "0xae78736cd615f374d3085123a210448e74fc6393"
+         indexed_filters: // [!code focus]
+           - event_name: Approval // [!code focus]
+             indexed_1:
+               - "0xd87b8e0db0cf9cbf9963c035a6ad72d614e37fd5" // [!code focus]
+               - "0x0338ce5020c447f7e668dc2ef778025ce398266b" // [!code focus]
+```
+
+Another example using filters is if you wanted to get all the approvals for any token for owner `0xd87b8e0db0cf9cbf9963c035a6ad72d614e37fd5`
+and `0x0338ce5020c447f7e668dc2ef778025ce398266b` you could set the indexed filters like so:
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+   - name: RocketPoolETH
+     details:
+       - network: ethereum
+         filter:
+            event_name: Approval
+         indexed_filters: // [!code focus]
+           - event_name: Approval // [!code focus]
+             indexed_1:
+               - 0xd87b8e0db0cf9cbf9963c035a6ad72d614e37fd5 // [!code focus]
+               - 0x0338ce5020c447f7e668dc2ef778025ce398266b // [!code focus]
+```
+
+### start_block
+
+The block to start indexing from, you can use the deployed block if you wish to get everything.
+
+:::info
+This is optional but most people will want to use this, if you do not provide an start block it will index the data from now and then live index as new blocks
+come in. Important to know this will NOT track last synced block and when you start and stop the indexer it will start from the latest block.
+You can read more about this [here](/docs/start-building/live-indexing-and-historic).
+:::
+
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000 // [!code focus]
+```
+
+### end_block
+
+:::info
+This is optional, if you do not provide an end block it will index all the data and then live index as new blocks
+come in. You can read more about this [here](/docs/start-building/live-indexing-and-historic).
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056 // [!code focus]
+```
+
+
+### Multiple Networks
+
+You can have multiple networks for the same contract, this is useful if you have a contract that is deployed on multiple
+networks.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks: // [!code focus]
+  - name: ethereum // [!code focus]
+    chain_id: 1 // [!code focus]
+    rpc: https://mainnet.gateway.tenderly.co // [!code focus]
+  - name: base // [!code focus]
+    chain_id: 8453 // [!code focus]
+    rpc: https://base.gateway.tenderly.co // [!code focus]
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details: // [!code focus]
+    - network: ethereum // [!code focus]
+      address: "0xae78736cd615f374d3085123a210448e74fc6393" // [!code focus]
+      start_block: 18600000 // [!code focus]
+      end_block: 18718056 // [!code focus]
+    - network: base // [!code focus]
+      address: "0xba25348cd615f374d3085123a210448e74fa3333" // [!code focus]
+      start_block: 18118056 // [!code focus]
+      end_block: 18918056 // [!code focus]
+```
+
+## abi
+
+The ABI of the contract pointing to the JSON file in the repository. It can be a relative path or a full path.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json // [!code focus]
+```
+
+### Many ABIs
+
+If you need to use many ABIs in the single contract you can pass in an array
+this is useful if you have a contract which has several different implementations ABIs.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi:
+      - ./abis/RocketTokenRETH.abi.json // [!code focus]
+      - ./abis/RocketTokenRETH2.abi.json // [!code focus]
+```
+
+## include_events
+
+The events you wish to include for **raw event logging** - each event creates a row in its own table (e.g., `transfer`, `approval`).
+
+:::info
+This is optional. If you only want custom [tables](#tables) without raw event logging, you can omit this entirely.
+If neither `include_events` nor `tables` is specified, all events in the ABI will be indexed.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:  // [!code focus]
+      - Transfer // [!code focus]
+      - Approval // [!code focus]
+```
+
+## index_event_in_order
+
+rindexer was built to be as fast as it can so any blocking processes holds indexing up, the more concurrency the better.
+Any events which you wish to index in the order the events were emitted on that event in the contract can be put in this list.
+
+The more you put in here the slower the indexer will be as it will have to wait for the previous events to be indexed
+before it can index the next events.
+
+:::info
+This is optional if you do not provide this it will assume speed is more important than order.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+    index_event_in_order: // [!code focus]
+      - Transfer // [!code focus]
+      - Approval // [!code focus]
+```
+
+## dependency_events
+
+:::warning
+if you are using defined dependency_events and using [relationships](/docs/start-building/yaml-config/storage#relationships)
+you will need to make sure you define the relationship in the `dependency_events` manually as rindexer can not merge
+the relationship with the dependency events if custom dependency_events are defined.
+:::
+
+:::warning
+Also note any cross contracts relationships will not be applied automatically, you will need to define them manually in the YAML.
+if you do not rindexer will panic and let you know that you have to define the [dependency_events](/docs/start-building/yaml-config/contracts#dependency_events).
+:::
+
+rindexer was built to be as fast as it can so any blocking processes holds indexing up, the more concurrency the better.
+Any events which depend on each other can be put in the `dependency_events` list, this will mean that they will be processes
+in the order they are in the list.
+
+- `events` = process these events
+- `then` = after you processed the `events` above process these events
+
+If you do not put an event in the `dependency_events` events then it will be deemed a non-blocking event and will be processed
+as soon as it can.
+
+:::info
+This is optional if you do not provide this it will assume speed is more important than order.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+    dependency_events: // [!code focus]
+      events:
+        - Transfer // [!code focus]
+      then:
+        events:
+          - Approval // [!code focus]
+```
+
+### Cross Contract Dependency Events
+
+You can also define dependency events blocking across contracts, this is useful if you have many contracts which emit
+data but are dependent on each other.
+
+:::info
+WrappedRocketPoolETH example below does not exist on the chain, this is just an example of how you can use dependency events.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: WrappedRocketPoolETH // [!code focus]
+    details:
+      - network: ethereum
+        address: 0x2FD5c1659A82E87217DF254f3D4b71A22aE43eE8
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/WrappedRocketTokenRETH.abi.json
+    include_events: // [!code focus]
+    - Approval // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer // [!code focus]
+    dependency_events: // [!code focus]
+      events:
+        - Transfer // [!code focus]
+      then:
+        events:
+          - contract_name: WrappedRocketPoolETH // [!code focus]
+            event_name: Approval // [!code focus]
+```
+
+So now `WrappedRocketPoolETH` > `Approval` will not be processed until `RocketPoolETH` > `Transfer` is processed.
+
+
+## tables
+
+:::tip[Recommended for No-Code Projects]
+**Custom tables are the most powerful feature for no-code indexing.** Instead of just logging raw events,
+you can maintain derived state like token balances, NFT ownership, counters, and cross-chain aggregations -
+all without writing any Rust code.
+:::
+
+Custom tables let you define exactly what data you want to track and how events should update it.
+When using `tables`, you don't need `include_events` - rindexer will automatically subscribe to
+the events your tables reference.
+
+**Quick example - Track ERC20 token balances:**
+
+```yaml [rindexer.yaml]
+contracts:
+  - name: USDC
+    details:
+      - network: ethereum
+        address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        start_block: 18600000
+    abi: ./abis/ERC20.json
+    tables: // [!code focus]
+      - name: balances // [!code focus]
+        columns: // [!code focus]
+          - name: holder // [!code focus]
+          - name: balance // [!code focus]
+            default: "0" // [!code focus]
+        events: // [!code focus]
+          - event: Transfer // [!code focus]
+            operations: // [!code focus]
+              - type: upsert // [!code focus]
+                where: // [!code focus]
+                  holder: $to // [!code focus]
+                if: "$to != 0x0000000000000000000000000000000000000000" // [!code focus]
+                set: // [!code focus]
+                  - column: balance // [!code focus]
+                    action: add // [!code focus]
+                    value: $value // [!code focus]
+              - type: upsert // [!code focus]
+                where: // [!code focus]
+                  holder: $from // [!code focus]
+                if: "$from != 0x0000000000000000000000000000000000000000" // [!code focus]
+                set: // [!code focus]
+                  - column: balance // [!code focus]
+                    action: subtract // [!code focus]
+                    value: $value // [!code focus]
+```
+
+For complete documentation including column types, operations (`upsert`, `update`, `delete`),
+set actions (`add`, `subtract`, `max`, `min`), condition expressions (`if`), `global` tables,
+`cross_chain` aggregation, and more examples:
+
+[**Custom Tables Documentation →**](/docs/start-building/tables)
+
+## reorg_safe_distance
+
+Reorgs can happen on the chain, this is when a block is removed from the chain and replaced with another block.
+This can cause issues with the indexer indexed state if you turn `reorg_safe_distance` on it will keep a safe distance from the live
+latest block to avoid any reorg issues.
+
+Note if you are doing live indexing you will need to handle more advanced reorgs, support for advanced reorgs
+is in the backlog for rindexer.
+
+:::info
+This is optional if you do not provide this it will index the latest blocks instantly.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+    reorg_safe_distance: true // [!code focus]
+```
+
+## generate_csv
+
+If you wish to generate a CSV file of the indexed data you can turn this on. This will be ignored if you do not have
+the CSV storage enabled. By default if this is not supplied and the CSV storage is enabled it will generate a CSV file.
+
+:::info
+This is optional if you do not provide this it will generate a CSV file if the CSV storage is enabled.
+:::
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts: // [!code focus]
+  - name: RocketPoolETH
+    details:
+      - network: ethereum
+        address: "0xae78736cd615f374d3085123a210448e74fc6393"
+        start_block: 18600000
+        end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+    generate_csv: true // [!code focus]
+```
+
+## streams
+
+You can configure streams to stream the data to other services, this is useful if you want to use other services
+to index the data. You can read more about it [here](/docs/start-building/streams).
+
+## chat
+
+You can configure chat to send messages You can read more about it [here](/docs/start-building/chatbots).

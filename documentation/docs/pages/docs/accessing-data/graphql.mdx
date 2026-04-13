@@ -1,0 +1,625 @@
+# GraphQL
+
+GraphQL is a query language for your API, and a server-side runtime for executing queries using a type system you define for your data.
+
+you can learn all about graphql [here](https://graphql.org)
+
+## Hot Tip
+
+As GraphQL is a type system this means building queries can be a bit tricky, if you are not familiar with GraphQL.
+The beauty of this is using the http://localhost:3001/playground supplied for you allows you to build up all your queries
+but also understand every single filter and ordering you can do.
+
+## Querying the data
+
+The GraphQL will expose a playground for you which you can get to on http://localhost:3001/playground
+this uses apollo server sandbox which is a great tool for testing and building up your queries - https://studio.apollographql.com/sandbox/explorer.
+
+Note in these examples we will put the raw parameters in the graphql query but you can pass parameters in using the `$` syntax allowing
+code to define the parameters.
+
+:::code-group
+
+```graphql [hardcoded parameter]
+query AllTransfers {
+  allTransfers(first: 20) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```graphql [parameter passed in]
+query AllTransfers($first: Int!) {
+  allTransfers(first: $$first) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+:::
+
+
+### Query naming conventions
+
+lets say we had 2 events `Approval` and `Transfer` from the ERC20 standard, the ABI would look like the below:
+
+```json
+{
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "Transfer",
+    "type": "event"
+  }
+```
+
+with rindexer graphql you could generate the following queries to get the transfer data you need:
+
+:::code-group
+
+```graphql [list of transfers]
+query AllTransfers {
+  allTransfers {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```graphql [single transfer]
+query Transfer($nodeId: ID!) {
+  transfer(nodeId: $nodeId) {
+    nodeId
+    rindexerId
+    contractAddress
+    from
+    to
+    value
+    txHash
+    blockNumber
+    blockHash
+    network
+  }
+}
+```
+
+:::
+
+The format of the query names are:
+- list items = `all{event_name}s` = `All` + `Transfer` + `s` = `AllTransfers`
+- single item = `{event_name}` (lowercase) = `transfer`
+
+For single item queries you can use the `nodeId` to query single items which is always returned as a field
+in the list results alongside the singular item query.
+
+#### Conflicting event naming
+
+:::warning
+Important to read if you have 2 events with matching names across contracts.
+:::
+
+If you have 2 events which have exactly the same name as another contract this is a conflict of naming for graphql so rindexer will render
+it as `{contract_name}{event_name}` in pascal case, for example `Transfer` would turn into `{contract_name}Transfer`
+
+So its is super clear lets say i had a yaml like this:
+
+```yaml
+name: RocketPoolETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: 0xae78736cd615f374d3085123a210448e74fc6393
+    start_block: '18600000'
+    end_block: '18718056'
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+  - Transfer
+- name: RocketPoolETHFork
+  details:
+  - network: ethereum
+    address: 0xba78736cb615f374d3035123a210448e74fc6392
+    start_block: '18600000'
+    end_block: '18718056'
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+  - Transfer
+```
+
+My query names for `allTransfers` would be:
+
+- `AllRocketPoolETHTransfers`
+- `AllRocketPoolETHForkTransfers`
+
+### Ordering
+
+:::info
+All filtering options and ordering can both be used together.
+:::
+
+You can order the results by any field you wish, you can also order by multiple fields the first item in the array will
+be the applied ordering first then the next will be applied after and so on.
+
+:::warning
+It is advised to have indexes on any fields you which to filter on in your database to make the queries faster.
+You can define your own indexes in the [storage](/docs/start-building/yaml-config/storage#indexes) section of the YAML configuration file.
+:::
+
+This example will get the first 20 transfers ordered by the block number ascending.
+
+```graphql
+query AllTransfers {
+  allTransfers(first: 20, orderBy: [BLOCK_NUMBER_ASC]) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+### Filtering
+
+:::info
+All filtering options and ordering can both be used together.
+:::
+
+You can do condition filters as well as advanced filters on all the events indexed.
+
+:::warning
+It is advised to have indexes on any fields you which to filter on in your database to make the queries faster.
+You can define your own indexes in the [storage](/docs/start-building/yaml-config/storage#indexes) section of the YAML configuration file.
+:::
+
+#### Condition
+
+You can filter in every event property you want using the `condition` input fields.
+
+The example below im filtering on all transfer based on the block number, which has to be a string as its a BigFloat.
+
+```graphql
+query AllTransfers {
+  allTransfers(first: 20, condition: {
+    blockNumber: "18600181"
+  }) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+You can mix the filtering in every direction with any field so you can filter `blockNumber` with `from` and `to` with `value`
+or even `network` with `contractAddress` and `txHash`, anything you wish.
+
+```graphql
+query AllTransfers {
+  allTransfers(first: 20, condition: {
+    blockNumber: "18600181",
+    value: "2000000000000000000"
+    from: "0x0338ce5020c447f7e668dc2ef778025ce398266b"
+  }) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+#### Filter
+
+:::info
+Advanced filtering is enabled by default but these filters easily be abused and cause performance issues, if you wish to disable
+it you can set `disable_advanced_filters` to true in the [graphql](/docs/start-building/yaml-config/graphql#disable_advanced_filters) section of the YAML configuration file.
+:::
+
+For more advanced filtering you can use the `filter` input field. For example if we wanted to get all transfer events
+over 1 rEth (wei would be 1000000000000000000) and after block number 18600181 we can use the following query.
+
+```graphql
+query AllTransfers {
+  allTransfers(first: 20, condition: {
+    value: "1000000000000000000",
+  }, filter: {
+    blockNumber: {
+      greaterThan: "18600181"
+    }
+  }) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+### Result limits
+
+You can define how many you which to return using the `first` and `last` properties, you can not return more
+then 1000 in a single query but you can use offset to get the item you wish to get. We advise to always
+set a limit on the amount of items you wish to return.
+
+- first will return the first inserted x items
+- last will return the last inserted x items
+- offset will return the first/last x items after the offset
+
+:::code-group
+
+```graphql [first]
+query AllTransfers {
+  allTransfers(first: 20) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```graphql [last]
+query AllTransfers {
+  allTransfers(last: 20) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```graphql [offset]
+query AllTransfers {
+  allTransfers(first: 20, offset: 20) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+:::
+
+### Page info
+
+The page info will give you the following information:
+
+- endCursor: The cursor to continue from
+- hasNextPage: If there is a next page
+- hasPreviousPage: If there is a previous page
+- startCursor: The cursor to start from
+
+#### Cursor based pagination
+
+Cursor-based pagination is a common approach to pagination that avoids some of the pitfalls of "classic" page-based pagination.
+The idea is to encode the current state of the query into a "cursor" that can be passed back to the server to get the next page of results.
+
+You can page through the data using `before` and `after` cursors, you can get the cursors from the `pageInfo` object.
+
+- `before` will get the items before the cursor - this is how you go back in the data so say page 2 to page 1
+- `after` will get the items after the cursor - this is how you go forward in the data so say page 1 to page 2
+
+:::code-group
+
+```graphql [next results]
+query AllTransfers {
+  allTransfers(
+      first: 1,
+      orderBy: [BLOCK_NUMBER_ASC],
+      after: "WyJibG9ja19udW1iZXJfYXNjIixbMTg2MDAxODEsMV1d"
+    ) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```graphql [preview results]
+query AllTransfers {
+  allTransfers(
+      first: 1,
+      orderBy: [BLOCK_NUMBER_ASC],
+      before: "WyJibG9ja19udW1iZXJfYXNjIixbMTg2MDAxODEsMV1d"
+    ) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+:::
+
+### Relationships
+
+When you define [relationships](/docs/start-building/yaml-config/storage#relationships) between events rindexer will
+automatically create relationships between the events in the database and expose them on the `GraphQL` interface, this
+means you can query the relationships within a single query avoiding having to have multiple queries to get the data you need.
+
+Lets walk through an example imagine we were playing around with the `lens` data and we want to get the profile metadata back
+when we get quotes created. we can create a relationship between the `QuoteCreated` `quoteParams.profileId` and the `ProfileMetadataSet`
+`profileId` events, note you should read about [relationships config](/docs/start-building/yaml-config/storage#relationships) first.
+
+Your `rindexer.yaml` would look like:
+
+```yaml
+name: LensIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: polygon
+    chain_id: 137
+    rpc: https://polygon.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+    relationships: // [!code focus]
+      - contract_name: LensHub // [!code focus]
+        event_name: QuoteCreated // [!code focus]
+        event_input_name: "quoteParams.profileId" // [!code focus]
+        linked_to: // [!code focus]
+          - contract_name: LensHub // [!code focus]
+            event_name: ProfileMetadataSet // [!code focus]
+            event_input_name: profileId // [!code focus]
+contracts:
+  - name: LensHub // [!code focus]
+    details:
+      - network: polygon
+        address: 0xDb46d1Dc155634FbC732f92E853b10B288AD5a1d
+        start_block: 59034400
+        end_block: 59034400
+    abi: ./abis/lens-hub-events-abi.json
+    include_events: // [!code focus]
+      - QuoteCreated // [!code focus]
+      - ProfileMetadataSet // [!code focus]
+```
+
+So in this example the `allQuoteCreateds` and `quoteCreated` queries will allow you to get the `ProfileMetadataSet` event
+in the same query. This is a basic example but you can see how you can query the relationships within the same query.
+
+```
+query AllQuoteCreateds {
+  allQuoteCreateds {
+    nodes {
+      nodeId
+      quoteParamsContentUri
+      quoteParamsPointedProfileId
+      quoteParamsPointedPubId
+      by: profileMetadataSetByQuoteParamsProfileId {
+        profileId
+        metadata
+        transactionExecutor
+        timestamp
+        txHash
+        blockNumber
+        blockHash
+        network
+      }
+      timestamp
+      txHash
+    }
+  }
+}
+```
+
+:::info
+GraphQL supports aliases to make your queries read even nicer, you can read more about them [here](https://graphql.org/learn/queries/#aliases).
+People may not like the event input names and can easily alias them to something more readable.
+:::

@@ -1,0 +1,228 @@
+# global
+
+Global YAML.
+
+## etherscan_api_key
+
+:::info
+This is optional and will use a shared fallback key if not provided. This can be rate limited as many people may be using it.
+We advise if using `rindexer add` very often to provide your own key.
+:::
+
+We advise you to put the etherscan API key in an environment variable.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global: // [!code focus]
+  etherscan_api_key: ${ETHERSCAN_API_KEY} // [!code focus]
+```
+
+## contracts
+
+:::info
+If you are building a no-code project you can skip this section. This is for rust projects only.
+:::
+
+The contracts section of the global YAML config allows you to define contracts which can be used in the indexers.
+You can define many contracts in a single YAML file.
+
+### name
+
+The name of the contract, it should be unique to the YAML file.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global: // [!code focus]
+  contracts: // [!code focus]
+    - name: USDT // [!code focus]
+```
+
+### details
+
+The details of the contract.
+
+#### address
+
+The address of the contract.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global:
+  contracts:
+    - name: USDT
+      details: // [!code focus]
+        - address: 0xdac17f958d2ee523a2206206994597c13d831ec7 // [!code focus]
+```
+
+#### network
+
+The network the contract is on, this should match the network name in the networks section of the YAML file.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global:
+  contracts:
+    - name: USDT
+      details:
+        - address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+          network: ethereum // [!code focus]
+```
+
+### abi
+
+The path to the ABI file for the contract. It can be a relative or full path.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum
+  chain_id: 1
+  rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global:
+  contracts:
+    - name: USDT
+      details:
+        - address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+          network: ethereum
+      abi: ./abis/erc20.abi.json // [!code focus]
+```
+
+## Multiple Contracts
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust
+networks:
+- name: ethereum // [!code focus]
+  chain_id: 1 // [!code focus]
+  rpc: https://mainnet.gateway.tenderly.co // [!code focus]
+- name: base // [!code focus]
+  chain_id: 8453 // [!code focus]
+  rpc: https://mainnet.base.org // [!code focus]
+storage:
+  postgres:
+    enabled: true
+contracts:
+- name: RocketPoolETH
+  details:
+  - network: ethereum
+    address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    start_block: 18900000
+    end_block: 19000000
+  abi: ./abis/RocketTokenRETH.abi.json
+  include_events:
+    - Transfer
+    - Approval
+global: // [!code focus]
+  contracts: // [!code focus]
+    - name: USDT // [!code focus]
+      details: // [!code focus]
+        - address: 0xdac17f958d2ee523a2206206994597c13d831ec7 // [!code focus]
+          network: ethereum // [!code focus]
+        - address: 0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2 // [!code focus]
+          network: base // [!code focus]
+      abi: ./abis/erc20.abi.json // [!code focus]
+```

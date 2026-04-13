@@ -1,0 +1,1236 @@
+# Changelog
+
+### Breaking changes
+-------------------------------------------------
+
+### Bug fixes
+-------------------------------------------------
+
+### Features
+-------------------------------------------------
+
+- feat: add support for tuple[] (array of structs) via JSONB storage
+
+## Releases
+-------------------------------------------------
+
+all release branches are deployed through `release/VERSION_NUMBER` branches
+
+# 0.35.0-beta - 28th Janurary 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.35.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.35.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.35.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.35.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.35.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: Production-grade Prometheus observability
+
+# 0.34.0-beta - 23rd Janurary 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.34.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.34.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.34.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.34.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.34.0/rindexer_win32-amd64.zip
+
+### Breaking changes
+-------------------------------------------------
+
+- StartDetails now has a cron_scheduler_handle set it to None if upgrading rust projects
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: validation if cols and sets are not aligned in tables
+- fix: add edge case for bytes32 for name and symbol to solve issues like MKR metadata
+- fix: graceful shutdown now aborts RPC batches immediately instead of waiting
+- fix: reduced shutdown timeout from 60s to instant exit when tasks complete
+- fix: checkpoint progress mid-batch when shutdown detected during event processing
+- fix: skip cache eviction during shutdown to exit faster
+
+
+### Features
+-------------------------------------------------
+
+- feat: factory cron indexing
+- feat: adaptive concurrency for RPC batches - scales up to 200 on success, backs off 50% on rate limits
+- feat: adaptive concurrency for block timestamp fetches using same capacity tracking
+- feat: cache eviction for VIEW_CALL_CACHE and BLOCK_TIMESTAMP_CACHE at 10k entrie
+
+# 0.33.0-beta - 21st Janurary 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.33.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.33.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.33.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.33.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.33.0/rindexer_win32-amd64.zip
+
+### Breaking changes
+-------------------------------------------------
+
+- breaking: Rename `rindexer_last_updated_block` to `rindexer_block_number`
+- breaking: Rename `rindexer_last_updated_at` to `rindexer_block_timestamp`
+- breaking: need to have timestamp: true to get timestamps in the database
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: tx hash + block hash to not parse into char(42)
+- fix: Injected columns rindexer_tx_hash, rindexer_block_hash, rindexer_contract_address now NOT NULL
+- fix: Remove unnecessary DEFAULT 0 from rindexer_block_number and rindexer_sequence_id
+- fix: Remove legacy block_timestamp from schema sync exclusion - Cleaned up old migration exclusion for both PostgreSQL and 
+  ClickHouse schema sync. The new rindexer_block_timestamp column is now fully managed by the timestamp flag.
+- fix: when graphql port is in use show error message and dont startup graphql
+
+### Features
+-------------------------------------------------
+
+- feat: Add nullable: bool option to table columns (columns are NOT NULL by default)
+- feat: Add $null value support to explicitly set columns to SQL NULL
+- feat: Add $if(condition, trueValue, falseValue) for conditional value assignment
+- feat: Add timestamp: bool option to tables - Opt-in rindexer_block_timestamp column. When true, 
+  creates the column as TIMESTAMPTZ NOT NULL. When false (default), the column is not created, saving storage and avoiding RPC overhead.
+- feat: Batch fetch and cache block timestamps - When timestamp: true and RPC metadata lacks timestamps, rindexer batch-fetches all unique 
+  blocks in a single RPC call per network and caches them globally for the entire indexing run. Deduplicates across events in the same block.
+- feat: Schema sync support for timestamp column - Adding/removing timestamp: true triggers appropriate schema migrations (add column or prompt for deletion).
+- feat: better logs when shutting down
+- feat: hook in multicall3 so $call can be 5x faster (yes 5x speed increase on index time by doing this)
+- feat: historic cron indexing
+
+# 0.32.0-beta - 20th January 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.32.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.32.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.32.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.32.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.32.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: Add exponentiation operator and $call() support in arithmetic expressions
+  - Add ^ operator for exponentiation (e.g., 10 ^ $decimals)
+  - Support $call() view calls inside arithmetic expressions
+  - Support $constant() references in $call() arguments
+  - Use PostgreSQL POWER() for SQL generation, U256::checked_pow for evaluation
+  - Parser precedence: additive → multiplicative → power → primary
+  - Add documentation and liquidation bot example with total_usd_value
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: postgres graphql comments clash fails to start graphql
+
+# 0.31.0-beta - 20th January 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.31.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.31.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.31.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.31.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.31.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: handle constants in the yaml allowing you to inject them in the yaml itself
+
+# 0.30.0-beta - 19th January 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.30.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.30.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.30.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.30.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.30.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: `create_batch_clickhouse_operation` and `create_batch_postgres_operation` functions to do upsert/delete/insert tasks
+- feat: `tables` supercharged is now live - build your tables, aggregate your data, index view functions everything with a simple YAML file :)
+
+# 0.29.0-beta - 6th January 2026
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.29.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.29.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.29.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.29.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.29.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: upgrade to alloy 1.1.3
+- feat: expose `RindexerEventStream` to allow subscribing to rindexer events
+
+### Bug fixes
+-------------------------------------------------
+- fix: add missing --graphql and --indexer flags for 'rindexer start all
+- fix: resolve the bad ANSI escape on the logger causing logs to render the ANSI escape incorrectly
+
+### Breaking changes
+-------------------------------------------------
+- `IndexingDetails` now includes optional `event_stream` for subscribing to rindexer events
+
+# 0.28.2-beta - 5th November 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.28.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: reorg safe range calculation for out-of-range an error message
+- fix: Upgrade dependecy minor versions to get latest alloy fixes
+- fix: gate kafka streams support behind `kafka` feature
+
+
+# 0.28.1-beta - 21st October 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.28.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: allow https connections for clickhouse
+- fix: resolve issue with "" on postgres insert
+
+
+# 0.28.0-beta - 13th October 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.28.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.28.0/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: only log error when the current block lumber is lower than the last seen when range is outside chain reorg safe
+- fix: unpin `tracing-subscriber` version
+
+### Features
+-------------------------------------------------
+- feat: check if the RPC chain id is matching the configured chain id in the yaml config on startup
+- feat: add support for `RINDEXER_LOG` environment variable to control the log level of rindexer
+- feat: Add clickhouse integration to rindexer rust project and nocode
+
+# 0.27.1-beta - 6th October 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.27.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: build break after alloy v2.10.0: remove NamedChain::PolygonZkEvm usage
+- fix: resolved race condition in event dependencies indexing that caused issues on networks with high block production rates
+- fix: support for the latest alloy
+
+
+# 0.27.0-beta - 26th September 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.27.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.27.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: add health endpoint with comprehensive system status monitoring
+- feat: add cloudflare queues to the streams
+
+### Bug fixes
+-------------------------------------------------
+- fix: optimisations
+
+
+# 0.26.0-beta - 12th September 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.26.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.26.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.26.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.26.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.26.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: expose PostgresClient::raw_connection so its easier to do transactions
+
+### Bug fixes
+-------------------------------------------------
+- fix: start indexer and graphql when a rust project is started without any commands
+- fix: take the correct default graphql endpoint when generating graphql files
+
+
+# 0.25.3-beta - 8th September 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.25.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: `contract_address` Postgres column changed from `char(66)` to `char(42)`
+- fix: `PostgresClient` now only exposes `insert_bulk` which handles internally whether to insert rows via INSERT or COPY
+- fix: regenerated example projects to support latest changes
+- fix: Index creation fails for filter contracts due to schema name mismatch
+
+### Breaking changes
+-------------------------------------------------
+- `contract_address` Postgres column changed from `char(66)` to `char(42)`
+- `PostgresClient` now only exposes `insert_bulk` which handles internally whether to insert rows via INSERT or COPY
+
+# 0.25.2-beta - 30th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.25.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: inject block timestamp in the generate indexing code
+- fix: resolve timestamp override mapping to contract breaking change
+- fix: resolve bad logs
+
+
+# 0.25.1-beta - 28th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.25.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: correct tuple wrapper slice indexing in map_ethereum_wrapper_to_json
+
+
+# 0.25.0-beta - 27th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.25.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.25.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: Adds timestamp config to the yaml config, allowing users to opt-in to block timestamps in logs
+- feat: Add chain_id to TxInformation struct
+- feat: Add xtask with block timestamp encoding mechanism
+- feat: Adds nocode postgres migration "versioning system"
+- feat: Expose a rust project handler to process raw blocks with transactions if native indexing is enabled.
+- feat: bump alloy to 1.0.27
+
+### Bug fixes
+-------------------------------------------------
+- fix: compiler issue with solar-parse
+- fix: Move rust_playground to examples
+- fix: resolve telegram marketdownv2
+
+
+# 0.24.1-beta - 20th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.24.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: graphql embedded binary
+
+# 0.24.0-beta - 19th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.24.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.24.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: support tuples and nested tuples as event inputs
+- feat: bring graphql into the binary
+- feat: support array in `input_name` factory filter configuration
+
+### Bug fixes
+-------------------------------------------------
+- fix: requiring to install lsof when running the graphql
+
+# 0.23.0-beta - 4th August 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.23.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.23.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.23.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.23.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.23.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: enhance filter conditions parsing and evaluation to handle complex expressions with logical operators
+- feat: extend `is_known_zk_evm_compatible_chain` to some new chains
+
+### Bug fixes
+- fix: fix codegen for events with irregular width solidity integer types
+- fix: logical operators precedence in filter conditions - https://github.com/joshstevens19/rindexer/issues/225
+
+### Breaking changes
+-------------------------------------------------
+- `EthereumSqlTypeWrapper` `U64`, `U64Nullable` and `U64BigInt` are now a rust `u64` type
+- `EthereumSqlTypeWrapper::VecU64` is now a rust `Vec<u64>` type
+- `TxInformation` `block_number` and `transaction_index` are now a rust `u64` type
+
+
+# 0.22.3-beta - 30th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.22.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: do not try to write streams file even when csv is off
+
+
+# 0.22.2-beta - 30th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.22.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: remove custom panic handling as causing issues
+- fix: too much noise on the last seen live logs
+
+
+# 0.22.1-beta - 29th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.22.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: make rpc error logging only log out errors which are not already handled
+- fix: generate proper snake case file names for factory contracts handlers
+- fix: drop rindexer_internal.latest_block when drop_each_run is defined
+
+
+# 0.22.0-beta - 25th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.22.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.22.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: add some extra logging extensions to see when rpcs are falling over
+- feat: adding more logging when the node gets back since last seen block number
+- feat: improve factory contract indexing by fully indexing factory contract event
+
+### Bug fixes
+-------------------------------------------------
+- fix: Consolidate Async Runtimes - https://github.com/joshstevens19/rindexer/issues/271
+
+
+# 0.21.2-beta - 16th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.21.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve build issues with reth dependencies, and feature gate reth dependencies to avoid bloating the binary size
+
+
+# 0.21.1-beta - 16th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.21.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.1/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: Add a `Nullable` Numeric256 SQL type, `Nullable` DateTime SQL type and Uuid SQL type
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve issues with updating last seen block even if the event failed
+
+
+# 0.21.0-beta - 15th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.21.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.21.0/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve multi-network dependency issues
+
+
+# 0.20.0-beta - 10th July 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.20.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.20.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.20.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.20.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.20.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: support reth natively in rindexer https://rindexer.xyz/docs/start-building/create-new-project/reth-mode + https://rindexer.xyz/docs/advanced/using-reth-exex
+
+- Indexing with `eth_getBlockByNumber` for more efficiency (but still retain all debug/trace logic for future options)
+- Add tx receipt endpoint as useful prep work for raw transaction indexing option
+- Add an ever-so-slightly backpressured queue per "network-event" for super fair scheduling, decreased write contention on the database, and improved memory utilisation, can use 1/4 of memory with no throughput drop in some cases.
+
+### Bug fixes
+-------------------------------------------------
+- fix: https://github.com/ethereum/go-ethereum/pull/31876 changed max address per logs to 1000 to be aligned with geth
+
+- Use correct provider base which is `AnyProvider` that can handle optimism, rollups, and all evm chain style responses.
+- Misc tweaks to optimise how this native transfer fetching is done with batching, and pass rpc provider to allow for better batching in other endpoints
+- Remove the permits system entirely, it's had some serious problems with fair distribution (where some events would consistenyl take more permits than others)
+- We weren't writing to the db if no events were found in a block range... this was a major problem for highly infrequent events as rindexer wouldn't write the "last seen block", fixed.
+- Fixed a pretty major bug with the "optimal log parsing regex" (where the BlockNumber::from_str() wasn't actually parsing the hex, so it silently failed and used sub-optimal fallbacks)
+- Fix indexer codegen to use correct names and types, as well as fix formatting problems where rustfmt couldn't parse the nesting we were doing
+- Other memory optimisations
+
+# 0.19.1-beta - 17th June 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.19.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: Fix code generation for complex event names (with `_` separator)
+
+# 0.19.0-beta - 17th June 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.19.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.19.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: Numeric U256 Array EthereumSqlTypeWrapper
+- feat: U64BigInt and I256Numeric
+
+### Bug fixes
+-------------------------------------------------
+- fix: Fix dependency events handling after regression introduced with factory filtering
+
+# 0.18.0-beta - 13th June 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.18.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.18.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.18.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.18.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.18.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- Add support for indexing events from a factory-deployed smart contract by introducing a `factory` filter option in `contract` configuration.
+
+# 0.17.3-beta - 9th June 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.17.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- Improve RPC Efficiency
+- Make Native Transfer indexing a little more gently on startup, and a bit slower on failure, to prevent overloading apis with concurrency
+- Improve Startup speed significantly by reducing lots of redundant sequential rpc calls
+- Respect native transfer `enabled: false` setting
+- Add some more debug logging, spans, and change some log levels
+
+### Breaking changes
+-------------------------------------------------
+
+- Add  `block_poll_frequency` to the yaml config to allow better control over block polling behavior. This will require re-running codegen for rust projects as it breaks the existing `create_client` interface.
+
+## 0.17.2-beta - 30th May 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.17.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: await register call in event handlers generated on rust projects
+- fix: resolve foundry compiler mismatch version
+
+## 0.17.1-beta - 27th May 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.17.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- Resolve Docker image crashes with "Illegal instruction (core dumped)" on various x86-64 processors
+
+## 0.17.0-beta - 26th May 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.17.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.17.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- Alter full toolchain to stable, drop some nightly rustfmt options and re-run fmt.
+- Improve logging experience by including more `errors` and `network` info where possible.
+- Add a currently undocumented `CONTRACT_PERMITS` env var to control manually the concurrency via an env var.
+- Add `HasTxInformation` trait to allow working with generics over Network Contract Events.
+
+### Bug fixes
+-------------------------------------------------
+
+- Fix a bug with broken binary copy in the Postgres client. `finish` should be called manually on a bad write.
+- Fix bug with breaking out of historical indexing on log fetch error.
+- Fix native transfer indexing bug by adjusting the reorg safe condition to be correct
+- Fix `fetch_logs` block range parsing to include fallback string if no Err variant found (fixes Lens indexing)
+
+all release branches are deployed through `release/VERSION_NUMBER` branches
+
+## 0.16.1-beta - 20th May 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.16.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: alloy stable + alloy dependency mismatch
+
+## 0.16.0-beta - 6th May 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.16.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.16.0/rindexer_win32-amd64.zip
+
+### Breaking changes
+-------------------------------------------------
+- alloy migration for rust projects - https://rindexer.xyz/docs/start-building/rust-project-deep-dive/ethers-alloy-migration
+
+## 0.15.5-beta - 24th April 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.5
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.5/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.5/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.5/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.5/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: native trace patches for rust projects
+
+## 0.15.4-beta - 8th April 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.4
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.4/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.4/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.4/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.4/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: issue if your yaml contracts or event names are too long - postgres max length is 63 char but it doesnt fail meaning last indexed block number is never snapshotted
+
+## 0.15.3-beta - 27th March 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: rust project generation
+
+
+## 0.15.2-beta - 27th March 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve issue when event is on the last block indexed
+
+## 0.15.1-beta - 26th March 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.1/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: allow manifest config to define the rpc method used for native-transfer indexing
+
+### Bug fixes
+
+- fix: resolve ubuntu to build on version 22.0.4 due to GLIBC_2.39 issues on 22.4
+
+## 0.15.0-beta - 25th March 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.15.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.15.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: improve speed of indexing with a few optimisations
+- feat: native transfer indexing
+
+## 0.14.0-beta - 6th March 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.14.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.14.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.14.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.14.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.14.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: add support for alias in streams
+
+## 0.13.0-beta - 20th Feb 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.13.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.13.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.13.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.13.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.13.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: add a `U64Nullable` type to handle zero values
+- feat: support custom AWS endpoints
+- feat: forward event signature for all events streamed
+
+## 0.12.0-beta - 1st Jan 2025
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.12.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.12.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.12.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.12.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.12.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: Redis Streams
+
+### Bug fixes
+-------------------------------------------------
+- fix: issue two's complement on large u256 values
+- fix: resolve building the project on a PR branch
+- fix: resolve numeric type parsing issues on out of range rust decimals
+
+## 0.11.3-beta - 28th December 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.11.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: index throws on multiple relationships with same input name
+
+## 0.11.2-beta - 19th December 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.11.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: cors when accessing rindexer graphql api from different host
+
+### Breaking changes
+-------------------------------------------------
+- rindexerdown and then `curl -L https://rindexer.xyz/install.sh | bash` to reinstall rindexer
+
+## 0.11.1-beta - 10th December 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.11.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve bad typings generated for decoding if only 1 parameter in rust project
+
+## 0.11.0-beta - 7th December 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.11.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.11.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: handle graceful shutdowns
+
+### Bug fixes
+-------------------------------------------------
+- fix: resolve race condition of dependency blocking indexing
+- fix: add new type for EthereumSqlTypeWrapper to handle VARCHAR strings
+- fix: error on startup not +1 onto the next block causing duplicates logs sometimes
+- fix: issue with it working on windows
+
+## 0.10.0-beta - 15th October 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.10.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.10.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.10.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.10.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.10.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: expose an insert_bulk new postgres function to make inserting bulk data easier
+- feat: expose new ethereum sql type wrappers for bytes types#
+- feat: expose postgres ToSql trait
+- feat: support with_transaction in postgres client
+- feat: get the block timestamp from the RPC call (its an option as not all providers expose it)
+- feat: allow you to override environment file path
+
+### Bug fixes
+-------------------------------------------------
+- fix: dependency events not being applied to the correct contract
+- fix: resolve defining environment variables in contract address fields in the yaml
+- fix: resolve topic_id packing issues
+
+## 0.9.0-beta - 19th September 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.9.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.9.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.9.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.9.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.9.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: allow some other attributes on the generated event typings
+
+### Bug fixes
+-------------------------------------------------
+- fix: handle signed integers throughout rindexer
+- fix: generating global types would repeat the same code on a regenerate causing issues
+
+### Breaking changes
+-------------------------------------------------
+- breaking: rindexer had an parsing error meaning stuff like `UniswapV3Pool` would parse to uniswap_v_3_pool. This caused
+some other issues with mapping to object names so now it has been fixed and in the example above it will be `uniswap_v3_pool`,
+if you have any running indexers with these buggy names in your db you just need to rename them and same with the `rindexer.internal` tables which will
+have these odd names as well.
+
+## 0.8.0-beta - 17th September 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.8.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.8.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.8.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.8.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.8.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: info log if no new blocks are published in the last 20 seconds to avoid people thinking rindexer is stuck
+
+### Bug fixes
+-------------------------------------------------
+- fix: pascal case still has some edge cases on parsing
+- fix: allow #![allow(non_snake_case)] in indexer code
+- fix: still generate internal tables for rindexer even if creating new event tables is disabled
+
+## 0.7.1-beta - 17th September 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.7.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: throw error if contract names are not unique
+- fix: allow non camel case types in generated code
+- fix: pascal case not parsing capitals full words correctly
+
+## 0.7.0-beta - 16th September 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.7.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.7.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+- feat: support multiple abis in a single contract
+- feat: allow array of filters in the same contract without repeating
+
+### Bug fixes
+-------------------------------------------------
+- fix: running rust project should only start indexer or graphql passed on args passed
+- fix: resolve issue of paths in generated typings
+- fix: when running rindexer codegen typings csv folder created
+- fix: underscores in events within a rust project maps it wrong in typings
+- fix: share a postgres instance across rust project
+
+## 0.6.2-beta - 24th August 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.6.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+- fix: Use the prefix when generating abi name properties.
+
+## 0.6.1-beta - 15th August 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.6.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: resolve issue with conflicting event names on graphql meaning it would not load
+- fix: resolve filter table names mapping to graphql meaning it would not expose the graphql queries
+
+## 0.6.0-beta - 8th August 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.6.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.6.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: add a disable_logs_bloom_checks field to the network section of the [YAML configuration file](https://rindexer.xyz/docs/start-building/yaml-config/networks#disable_logs_bloom_checks)
+
+
+## 0.5.1-beta - 7th August 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.5.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: resolve unhandled solidity types in solidity_type_to_ethereum_sql_type_wrapper
+
+## 0.5.0-beta - 6th August 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.5.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.5.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: support chatbots on telegram - https://rindexer.xyz/docs/start-building/chatbots/telegram
+- feat: support chatbots on discord - https://rindexer.xyz/docs/start-building/chatbots/discord
+- feat: support chatbots on slack - https://rindexer.xyz/docs/start-building/chatbots/slack
+- feat: support streams with kafka - https://rindexer.xyz/docs/start-building/streams/kafka
+- feat: support streams with rabbitmq - https://rindexer.xyz/docs/start-building/streams/rabbitmq
+- feat: support streams with webhooks - https://rindexer.xyz/docs/start-building/streams/webhooks
+- feat: support streams with sns/sqs - https://rindexer.xyz/docs/start-building/streams/sns
+- feat: create .gitignore file for new projects
+
+## 0.4.0-beta - 30th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.4.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.4.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.4.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.4.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.4.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: create a docker image and github workflow for building it when pushed
+
+## 0.3.1-beta - 30th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.3.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: throw an error if trying to include a non-event type in the `include_events` array
+- fix: postgres connection error issue seen on supabase
+- fix: refactor postgres new to always try ssl first then retry without ssl to be inline with best practices
+
+## 0.3.0-beta - 26th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.3.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.3.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: support for phantom events - https://rindexer.xyz/docs/start-building/phantom
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: resolve issue with no inputs in events syntax error for postgres
+- fix: better error message when etherscan is not supported for network
+
+
+## 0.2.0-beta - 21th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.2.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.2.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.2.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.2.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.2.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+- feat: add max_block_range to networks - https://github.com/joshstevens19/rindexer/issues/55
+- feat: allow you to add your own etherscan api key - https://rindexer.xyz/docs/start-building/yaml-config/global#etherscan_api_key
+- feat: improve logs bloom log message
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: resolve `substitute_env_variables` to use `${}` instead of `$<>` for env variables
+
+## 0.1.4-beta - 20th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.1.4
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.4/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.4/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.4/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.4/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: fixing the query of implemntation ABI for proxy contracts
+- fix: add request timeouts to adapt to different verifier's rate limits
+- fix: make chain_id u64 instead of u32 - https://github.com/joshstevens19/rindexer/issues/53
+- fix: fix rust project not being able to run due to borrower check
+- fix: fix typings generations to parse the object values correctly
+
+
+## 0.1.3-beta - 19th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.1.3
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.3/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.3/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.3/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.3/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: Remove package specifier from codegen Cargo.toml
+
+## 0.1.2-beta - 18th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.1.2
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.2/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.2/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.2/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.2/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: allow postgres tls connections to be used (?sslmode=require)
+
+## 0.1.1-beta - 16th July 2024
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.1.1
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.1/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.1/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.1/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.1/rindexer_win32-amd64.zip
+
+### Bug fixes
+-------------------------------------------------
+
+- fix: support all the int solidity types - https://github.com/joshstevens19/rindexer/issues/45
+
+## 0.1.0-beta - 15th July 2024
+-------------------------------------------------
+
+github branch - https://github.com/joshstevens19/rindexer/tree/release/0.1.0
+
+- linux binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.0/rindexer_linux-amd64.tar.gz
+- mac apple silicon binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.0/rindexer_darwin-arm64.tar.gz
+- mac apple intel binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.0/rindexer_darwin-amd64.tar.gz
+- windows binary - https://github.com/joshstevens19/rindexer/releases/download/v0.1.0/rindexer_win32-amd64.zip
+
+### Features
+-------------------------------------------------
+
+Release of rindexer

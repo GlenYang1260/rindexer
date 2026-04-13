@@ -1,0 +1,131 @@
+# Running
+
+## No-code Project
+
+You can run the no-code project really easily with the CLI toolset.
+
+:::info
+rindexer starts your postgres docker compose file up for you automatically if the DATABASE_URL can not connect to the database and docker-compose.yml is present in the parent directory.
+You will need to make sure you have docker running on your machine before starting the project. If you have not got docker you can install it [here](https://docs.docker.com/get-docker/).
+You can also run docker manually by using `docker compose up -d`.
+:::
+
+:::warn
+graphql API can only be ran when you have a postgres storage setup in your YAML.
+:::
+
+:::code-group
+
+```bash [indexer and graphql]
+rindexer start all
+```
+
+```bash [indexer]
+rindexer start indexer
+```
+
+```bash [graphql]
+rindexer start graphql
+```
+
+:::
+
+You can change the GraphQL port by doing --port [number] in both all and graphql commands above.
+
+### Hot Reload
+
+Add the `--watch` flag to automatically restart when you edit `rindexer.yaml`:
+
+:::code-group
+
+```bash [indexer and graphql]
+rindexer start --watch all
+```
+
+```bash [indexer]
+rindexer start --watch indexer
+```
+
+:::
+
+Rindexer will validate the new config before restarting. Invalid YAML is rejected and the current process keeps running. See the [Hot Reload](/docs/start-building/hot-reload) documentation for full details including production deployment.
+
+:::info
+If you change your contract ABIs or want to start fresh you can use the [delete](/docs/start-building/delete) command to drop all the data and start over.
+You can also use the [drop_each_run](/docs/start-building/yaml-config/storage#drop_each_run) option in the YAML configuration file to drop all the data for the indexer before starting.
+:::
+
+## Health Monitoring
+
+When you start rindexer with indexing enabled, a health monitoring server automatically starts on port `8080`. This provides real-time insights into your indexing infrastructure status.
+
+### Quick Health Check
+
+Access the health endpoint at `http://localhost:8080/health` to get system status:
+
+```json
+{
+  "status": "healthy",
+  "services": {
+    "database": "healthy",
+    "indexing": "healthy", 
+    "sync": "healthy"
+  },
+  "indexing": {
+    "active_tasks": 2,
+    "is_running": true
+  }
+}
+```
+
+### Health Server Lifecycle
+
+- **`rindexer start indexer` (with end_block)**: Short-lived - dies when historical indexing completes
+- **`rindexer start indexer` (no end_block)**: Long-lived - stays alive for live indexing  
+- **`rindexer start graphql`**: No health server - health monitoring not available
+- **`rindexer start all`**: Long-lived - follows GraphQL server lifecycle
+
+:::info
+For detailed health monitoring documentation, see the [Health Monitoring](/docs/start-building/health-monitoring) guide.
+:::
+
+## Rust Project
+
+If you want to run this with docker support for the postgres first run:
+
+```bash
+docker compose up -d
+```
+
+Then to run the the rust project you can run the following command:
+
+:::info
+You are creating a rust rindexer project you should be wanting to change all of this logic to suit your needs.
+Just like react create app exposes you to the boilerplate code to get you started, this is the same.
+If you change the main.rs some of the arguments like --indexer and --graphql may not run with these
+commands but as you would of changed it you will know how to run it.
+:::
+
+:::code-group
+
+```bash [everything]
+cargo run
+```
+
+```bash [indexer only]
+cargo run -- --indexer
+```
+
+```bash [graphql only]
+cargo run -- --graphql
+```
+
+:::
+
+We also advise you in production to run your rust projects in release mode, you can run it in release mode using
+
+```bash
+cargo run --release
+```
+
+You can also do other fancy production builds with other frameworks like jemalloc and other flags, but we will leave that to you to explore.

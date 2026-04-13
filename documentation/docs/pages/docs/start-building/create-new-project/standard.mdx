@@ -1,0 +1,334 @@
+# Create New Project - Standard Mode
+
+:::info
+Make sure you have the CLI installed before starting a new project.
+You can find the installation instructions [here](/docs/introduction/installation).
+:::
+
+We advise anyone using rindexer to install docker which makes running locally with postgres storage a lot easier.
+If you not got docker you can install it [here](https://docs.docker.com/get-docker/).
+
+## 1. Create a new project
+
+This will walk you through setting up your project by asking you a series of questions in the terminal.
+
+:::code-group
+
+```bash [no-code]
+rindexer new no-code
+```
+
+```bash [rust]
+rindexer new rust
+```
+
+:::
+
+### Example New
+
+```bash
+Initializing new rindexer project...
+
+Project Name: RocketPoolETHIndexer
+Project Description (skip by pressing Enter): My first rindexer project
+Repository (skip by pressing Enter): https://github.com/joshstevens19/rindexer
+What Storages To Enable? (graphql can only be supported if postgres is enabled) [postgres, csv, both, none]: postgres
+Postgres Docker Support Out The Box? [yes, no]: yes
+
+rindexer no-code project created with a rETH transfer events YAML template.
+```
+
+If any of the steps are unclear, you can find more information in the [New Project Appendix](#new-project-appendix).
+
+Once completed a new boilerplate project will be created in the current directory. You can navigate to the project directory and start building your project.
+The boilerplate project is configured to index rETH transfer and approval events from ethereum mainnet between a specific block range.
+
+## 2. Add Environment Variables
+
+If you are not using `postgres` you can move straight to [starting your project](#3-config-your-rindexeryaml-file).
+
+If you selected `yes` to the `Postgres Docker Support Out The Box?` question, a `.env` file has be generated for you
+with the required environment variables. You can move straight to [starting your project](#3-config-your-rindexeryaml-file).
+
+--------------------------------
+
+Open up the generated `.env` file and fill in the required environment variables.
+
+### DATABASE_URL
+
+:::warning
+Can skip if:
+- on question "What Storages To Enable?" you selected csv or none
+- on question "Postgres Docker Support Out The Box?" you selected yes
+:::
+
+For ease of running locally we suggest you enable docker support on the rindexer project, if you did not 
+enable docker support with postgres storage you will need to provide a postgres database information in the `.env` file 
+which has been generated for you.
+
+`sslmode=require` is supported as well just include it in the connection string.
+
+### POSTGRES_PASSWORD
+
+:::warning
+Can skip if:
+- on question "What Storages To Enable?" you selected csv or none
+- on question "Postgres Docker Support Out The Box?" you selected no
+:::
+
+This is injected into the `.env` for your if you selected `yes` to the `Postgres Docker Support Out The Box?` question.
+This is used for the docker to create a postgres database for you locally. You do not need this if you have your own postgres database or
+on deployed environments. It is purely for local development.
+
+```bash
+POSTGRES_PASSWORD=password
+```
+
+### Other Environment Variables
+
+Every part of the `rindexer.yaml` file can be overridden by an environment variable.
+The syntax for this in the `rindexer.yaml` is `${ENV_VARIABLE_NAME}` example `${POLYGON_RPC_URL}`. This can be used in ANY field in the YAML file.
+Read more about the environment variables in the [yaml configuration documentation](/docs/start-building/yaml-config#environment-variables).
+
+## 3. Config your `rindexer.yaml` file
+
+Generating a rindexer project will generate a `rindexer.yaml` file for you. This is where you will configure your project.
+You can read all about the rindexer.yaml settings in the [yaml configuration documentation](/docs/start-building/yaml-config).
+You can also use the [rindexer add](/docs/start-building/add) command to add contracts to your project and pull in ABIs for you.
+
+:::tip[Want to track balances, counters, or aggregations?]
+Instead of just logging raw events, you can use **Custom Tables** to maintain derived state.
+For example, track token balances that automatically update with each Transfer event, or count
+user actions, or aggregate data across multiple chains.
+
+[Learn about Custom Tables →](/docs/start-building/tables)
+:::
+
+It will generate you an boilerplate project which is configured to index rETH transfer and approval events from ethereum mainnet between a specific block range.
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+    - Transfer
+    - Approval
+```
+
+## 4. Start the project
+
+:::info
+rindexer starts your postgres docker compose file up for you automatically if the DATABASE_URL can not connect to the database and docker-compose.yml is present in the parent directory.
+You will need to make sure you have docker running on your machine before starting the project. If you have not got docker you can install it [here](https://docs.docker.com/get-docker/).
+You can also run docker manually by using `docker compose up -d`.
+:::
+
+:::info
+graphql can only run if you have postgres storage enabled
+:::
+
+:::code-group
+
+```bash [graphql and indexer]
+rindexer start all
+```
+
+```bash [indexer only]
+rindexer start indexer
+```
+
+```bash [graphql only]
+rindexer start graphql
+```
+
+:::
+
+:::warning
+The boilerplate template uses a free node which may get rate limited. We recommend using a paid node for production.
+:::
+
+## 5. Query the GraphQL API
+
+:::info
+It is worth noting that the graphql API is here for convenience as it works out the box with the postgres storage,
+if your building an advance indexer you may want to build your own API on top of the data you have indexed.
+If that's the case it is fine just to use rindexer as the indexing tool and build your own API on top of it.
+:::
+
+:::info
+Each page request will have a max query limit of 1000 per page to avoid memory and database issues.
+:::
+
+GraphQL will be available at http://localhost:3001/graphql and the playground at http://localhost:3001/playground.
+You can read more about rindexer GraphQL API in the [API documentation](/docs/accessing-data/graphql).
+
+:::code-group
+
+```graphql [request]
+query AllTransfers($orderBy: [TransfersOrderBy!] = [BLOCK_NUMBER_DESC], $first: Int = 5) {
+  allTransfers(orderBy: $orderBy, first: $first) {
+    nodes {
+      blockHash
+      blockNumber
+      contractAddress
+      from
+      network
+      nodeId
+      to
+      txHash
+      value
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+```
+
+```json [response]
+{
+  "data": {
+    "allTransfers": {
+      "nodes": [
+        {
+          "blockHash": "0x8461da7a1d4b47190a01fa6eae219be40aacffab0dd64af7259b2d404572c3d9",
+          "blockNumber": "18718011",
+          "contractAddress": "0xae78736cd615f374d3085123a210448e74fc6393                        ",
+          "from": "0xfac5ddb4e3eb6941a458544bfe2588ee566bd4ff",
+          "network": "ethereum",
+          "nodeId": "WyJ0cmFuc2ZlcnMiLDU4Nzld",
+          "to": "0x2201d2400d30bfd8172104b4ad046d019ca4e7bd",
+          "txHash": "0x145c6705ffbf461e85d08b4a7f5850d6b52a7364d93a057722ca1194034f3ba4",
+          "value": "263518859"
+        },
+        {
+          "blockHash": "0x8461da7a1d4b47190a01fa6eae219be40aacffab0dd64af7259b2d404572c3d9",
+          "blockNumber": "18718011",
+          "contractAddress": "0xae78736cd615f374d3085123a210448e74fc6393                        ",
+          "from": "0xe4f719c11fc5ab883e32068df99962985645e860",
+          "network": "ethereum",
+          "nodeId": "WyJ0cmFuc2ZlcnMiLDU4ODBd",
+          "to": "0xc5c2dd38d29960e7bb015e77be44aefbb08f192b",
+          "txHash": "0x145c6705ffbf461e85d08b4a7f5850d6b52a7364d93a057722ca1194034f3ba4",
+          "value": "19152486233394367"
+        },
+        {
+          "blockHash": "0x8461da7a1d4b47190a01fa6eae219be40aacffab0dd64af7259b2d404572c3d9",
+          "blockNumber": "18718011",
+          "contractAddress": "0xae78736cd615f374d3085123a210448e74fc6393                        ",
+          "from": "0xc5c2dd38d29960e7bb015e77be44aefbb08f192b",
+          "network": "ethereum",
+          "nodeId": "WyJ0cmFuc2ZlcnMiLDU4ODFd",
+          "to": "0x882a41fd4c5d09d01900db378903c5c00cc31d64",
+          "txHash": "0x145c6705ffbf461e85d08b4a7f5850d6b52a7364d93a057722ca1194034f3ba4",
+          "value": "19159007520480803"
+        },
+        {
+          "blockHash": "0x8461da7a1d4b47190a01fa6eae219be40aacffab0dd64af7259b2d404572c3d9",
+          "blockNumber": "18718011",
+          "contractAddress": "0xae78736cd615f374d3085123a210448e74fc6393                        ",
+          "from": "0x882a41fd4c5d09d01900db378903c5c00cc31d64",
+          "network": "ethereum",
+          "nodeId": "WyJ0cmFuc2ZlcnMiLDU4ODJd",
+          "to": "0x2201d2400d30bfd8172104b4ad046d019ca4e7bd",
+          "txHash": "0x145c6705ffbf461e85d08b4a7f5850d6b52a7364d93a057722ca1194034f3ba4",
+          "value": "19159007520480803"
+        },
+        {
+          "blockHash": "0x8461da7a1d4b47190a01fa6eae219be40aacffab0dd64af7259b2d404572c3d9",
+          "blockNumber": "18718011",
+          "contractAddress": "0xae78736cd615f374d3085123a210448e74fc6393                        ",
+          "from": "0x882a41fd4c5d09d01900db378903c5c00cc31d64",
+          "network": "ethereum",
+          "nodeId": "WyJ0cmFuc2ZlcnMiLDU4ODNd",
+          "to": "0xc5c2dd38d29960e7bb015e77be44aefbb08f192b",
+          "txHash": "0x145c6705ffbf461e85d08b4a7f5850d6b52a7364d93a057722ca1194034f3ba4",
+          "value": "0"
+        }
+      ],
+      "pageInfo": {
+        "endCursor": "WyJibG9ja19udW1iZXJfZGVzYyIsWzE4NzE4MDExLDU4ODNdXQ==",
+        "hasNextPage": true,
+        "hasPreviousPage": false,
+        "startCursor": "WyJibG9ja19udW1iZXJfZGVzYyIsWzE4NzE4MDExLDU4NzldXQ=="
+      }
+    }
+  }
+}
+```
+
+:::
+
+### Generate graphql queries
+
+You can generate .graphql prebuilt queries to get up and running in seconds.
+These will be generated in a `queries` folder.
+
+```bash
+rindexer codegen graphql
+```
+
+#### TypeScript
+
+[graphql-codegen](https://the-guild.dev/graphql/codegen) is the best tool on the market to generate TypeScript typings for your GraphQL queries, mutations, and subscriptions.
+
+learn about the `codegen.ts` config [here](https://the-guild.dev/graphql/codegen/docs/config-reference/codegen-config)
+
+the graphql API url is the `schema` in the config, you can set this to your graphql endpoint like so:
+
+```ts
+import { CodegenConfig } from '@graphql-codegen/cli'
+
+const config: CodegenConfig = {
+  // this is YOUR_GRAPHQL_API_URL // [!code focus]
+  schema: 'http://localhost:3001/graphql', // [!code focus]
+  ...
+}
+
+export default config
+```
+
+then how you hook up the config with your tool of choice, below are some links to documentation:
+
+- React Apollo - https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-react-apollo#with-react-hooks
+- React Query - https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-react-query
+- Node app - https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-urql
+
+#### .NET, Dart, Java, Flow
+
+codegen for other languages can be found [here](https://the-guild.dev/graphql/codegen)
+
+## New Project Appendix
+
+If you are not sure what to select this section will explain each step in more detail.
+
+### What Storages To Enable?
+
+- Postgres - This will use a postgres database to store the data.
+- Csv - This will store the data in a csv file on the machine.
+- Both - This will store the data in both a postgres database and a csv file.
+- None - This will not store the data anywhere.
+
+### Postgres Docker
+
+- Yes - This will use docker to spin up a postgres database for you, great for local development.
+- No - This will not use docker and you will need to provide a postgres database information in the `.env` file.

@@ -1,0 +1,300 @@
+# Overview of the YAML Configuration File
+
+The YAML configuration file is the heart of your rindexer project. It defines the project's name,
+description, repository, and the contracts that will be used to index the data.
+This file is used to set up the project and configure the indexing tasks that will be performed.
+
+**YAML is case-sensitive, so make sure to use the correct case when defining the fields in the configuration file.**
+
+:::info
+YAML files can be mapped to environment variables to store sensitive information, such as RPC urls or other credentials.
+The syntax for this in the YAML is `${ENV_VARIABLE_NAME}`.
+:::
+
+## YAML structure
+
+- [Top level fields](/docs/start-building/yaml-config/top-level-fields) - The top-level fields of the YAML configuration file.
+- [Networks](/docs/start-building/yaml-config/networks) - The networks to listen for events on are defined in the YAML configuration file.
+- [Storage](/docs/start-building/yaml-config/storage) - The storage configuration is defined in the YAML configuration file.
+- [Contracts](/docs/start-building/yaml-config/contracts) - The indexers of the project are defined in the YAML configuration file.
+- [GraphQL](/docs/start-building/yaml-config/graphql) - The GraphQL configuration is defined in the YAML configuration file.
+- [Global](/docs/start-building/yaml-config/global) - The global events to listen for are defined in the YAML configuration file.
+- [Config](/docs/start-building/yaml-config/config) - The advanced configuration parameters for the indexer
+
+### Environment Variables
+
+YAML files can be mapped to environment variables to store sensitive information, such as RPC urls or other credentials.
+Alongside different environments mappings, allowing you to store different values for different environments.
+The syntax for this in the YAML is `${ENV_VARIABLE_NAME}`. This can be used in ANY field in the YAML file.
+
+example:
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: ${RPC_URL} // [!code focus]
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+## Example YAML no-code configuration file
+
+### For single contract address
+
+Filter events for a specific address
+
+#### Historic
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+#### Live
+
+No start or end block will index from all new blocks as they are produced live.
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+#### Live and historic
+
+No end block will index from the start block to the latest block then index all new blocks as they produced live.
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+      start_block: 18600000
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+### For many contract addresses
+
+Filter events for many contract addresses
+
+#### Historic
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address:
+        - "0xae78736cd615f374d3085123a210448e74fc6393" // [!code focus]
+        - "0x2FD5c1659A82E87217DF254f3D4b71A22aE43eE1" // [!code focus]
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+### For address or addresses with indexed filter
+
+Filter events for a specific address or array of addresses filtering on indexed fields.
+You can read more about indexed fields [here](/docs/start-building/yaml-config/contracts#indexed_1-indexed_2-indexed_3).
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: RocketPoolETH
+    details:
+    - network: ethereum
+      address: "0xae78736cd615f374d3085123a210448e74fc6393"
+      indexed_filters: // [!code focus]
+        - event_name: Transfer // [!code focus]
+          indexed_1: // [!code focus]
+            - 0xd87b8e0db0cf9cbf9963c035a6ad72d614e37fd5 // [!code focus]
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/RocketTokenRETH.abi.json
+    include_events:
+      - Transfer
+      - Approval
+```
+
+### Filter for an event across all contracts
+
+The historic, live and historic and live examples above can be used in every example. You can read more about
+these terms [here](/docs/start-building/live-indexing-and-historic).
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: TransferEvents
+    details:
+    - network: ethereum
+      filter:
+        event_name: Transfer
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/ERC20.abi.json
+```
+
+### Filter for an event across all contracts against indexed values
+
+The historic, live and historic and live examples above can be used in every example. You can read more about
+these terms [here](/docs/start-building/live-indexing-and-historic).
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: TransferEventForAddress
+    details:
+    - network: ethereum
+      filter:
+        event_name: Transfer
+      indexed_filters:
+         - event_name: Transfer
+           indexed_1:
+             - 0x4A1a2197f307222cD67A1762D9A352F64558d9Be
+      start_block: 18600000
+      end_block: 18718056
+    abi: ./abis/ERC20.abi.json
+```
+
+
+### Filter for address or addresses deployed by factory contract
+
+Filter events that are emitted from a known factory-deployed contract.
+You can read more about indexed fields [here](/docs/start-building/yaml-config/contracts#factory).
+
+```yaml
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code
+networks:
+  - name: ethereum
+    chain_id: 1
+    rpc: https://mainnet.gateway.tenderly.co
+storage:
+  postgres:
+    enabled: true
+contracts:
+  - name: UniswapV3Pool
+    details:
+      - network: ethereum
+        factory:
+          name: UniswapV3Factory
+          address: 0x1F98431c8aD98523631AE4a59f267346ea31F984
+          abi: ./abis/UniswapV3Factory.abi.json
+          event_name: PoolCreated
+          input_name: "pool"
+```

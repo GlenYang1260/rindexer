@@ -1,0 +1,271 @@
+use std::path::Path;
+
+use lapin::ExchangeKind;
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::{Map, Value};
+use tokio::fs;
+
+use crate::types::aws_config::AwsConfig;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StreamEvent {
+    pub event_name: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conditions: Option<Vec<Map<String, Value>>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SNSStreamTopicConfig {
+    pub prefix_id: Option<String>,
+    pub topic_arn: String,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SNSStreamConfig {
+    pub aws_config: AwsConfig,
+    pub topics: Vec<SNSStreamTopicConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WebhookStreamConfig {
+    pub endpoint: String,
+    pub shared_secret: String,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RedisStreamConfig {
+    pub connection_uri: String,
+    #[serde(default = "default_pool_size")]
+    pub max_pool_size: u32,
+    pub streams: Vec<RedisStreamStreamConfig>,
+}
+
+fn default_pool_size() -> u32 {
+    50
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RedisStreamStreamConfig {
+    pub stream_name: String,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExchangeKindWrapper(pub ExchangeKind);
+
+impl Serialize for ExchangeKindWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let kind = match &self.0 {
+            ExchangeKind::Direct => "direct",
+            ExchangeKind::Fanout => "fanout",
+            ExchangeKind::Headers => "headers",
+            ExchangeKind::Topic => "topic",
+            ExchangeKind::Custom(s) => s,
+        };
+
+        serializer.serialize_str(kind)
+    }
+}
+
+impl<'de> Deserialize<'de> for ExchangeKindWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: String = Deserialize::deserialize(deserializer)?;
+        let kind = match s.to_lowercase().as_str() {
+            "direct" => ExchangeKind::Direct,
+            "fanout" => ExchangeKind::Fanout,
+            "headers" => ExchangeKind::Headers,
+            "topic" => ExchangeKind::Topic,
+            _ => ExchangeKind::Custom(s),
+        };
+        Ok(ExchangeKindWrapper(kind))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RabbitMQStreamQueueConfig {
+    pub exchange: String,
+    pub exchange_type: ExchangeKindWrapper,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub routing_key: Option<String>,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RabbitMQStreamConfig {
+    pub url: String,
+    pub exchanges: Vec<RabbitMQStreamQueueConfig>,
+}
+
+impl RabbitMQStreamConfig {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.exchanges.is_empty() {
+            return Err("No exchanges defined in RabbitMQ config".to_string());
+        }
+
+        for config in &self.exchanges {
+            if config.exchange_type.0 != ExchangeKind::Direct
+                && config.exchange_type.0 != ExchangeKind::Fanout
+                && config.exchange_type.0 != ExchangeKind::Topic
+            {
+                return Err("Only direct, topic and fanout exchanges are supported".to_string());
+            }
+
+            if config.exchange_type.0 == ExchangeKind::Fanout && config.routing_key.is_some() {
+                return Err("Fanout exchanges do not support routing keys".to_string());
+            }
+
+            if config.exchange_type.0 == ExchangeKind::Topic && config.routing_key.is_none() {
+                return Err("Topic exchanges require a routing key".to_string());
+            }
+
+            if config.exchange_type.0 == ExchangeKind::Direct && config.routing_key.is_none() {
+                return Err("Direct exchanges require a routing keys".to_string());
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(feature = "kafka")]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KafkaStreamQueueConfig {
+    pub topic: String,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[cfg(feature = "kafka")]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KafkaStreamConfig {
+    pub brokers: Vec<String>,
+    pub security_protocol: String,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sasl_mechanisms: Option<String>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sasl_username: Option<String>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sasl_password: Option<String>,
+
+    pub acks: String,
+    pub topics: Vec<KafkaStreamQueueConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CloudflareQueuesStreamQueueConfig {
+    pub queue_id: String,
+    pub networks: Vec<String>,
+    #[serde(default)]
+    pub events: Vec<StreamEvent>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CloudflareQueuesStreamConfig {
+    pub api_token: String,
+    pub account_id: String,
+    pub queues: Vec<CloudflareQueuesStreamQueueConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StreamsConfig {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sns: Option<SNSStreamConfig>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub webhooks: Option<Vec<WebhookStreamConfig>>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rabbitmq: Option<RabbitMQStreamConfig>,
+
+    #[cfg(feature = "kafka")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kafka: Option<KafkaStreamConfig>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redis: Option<RedisStreamConfig>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cloudflare_queues: Option<CloudflareQueuesStreamConfig>,
+}
+
+impl StreamsConfig {
+    pub fn validate(&self) -> Result<(), String> {
+        if let Some(rabbitmq) = &self.rabbitmq {
+            return rabbitmq.validate();
+        }
+
+        Ok(())
+    }
+
+    pub fn get_streams_last_synced_block_path(&self) -> String {
+        let mut path = ".rindexer/".to_string();
+        #[allow(clippy::blocks_in_conditions)]
+        if self.rabbitmq.is_some() {
+            path.push_str("rabbitmq_");
+        } else if self.sns.is_some() {
+            path.push_str("sns_");
+        } else if self.webhooks.is_some() {
+            path.push_str("webhooks_");
+        } else if {
+            #[cfg(feature = "kafka")]
+            {
+                self.kafka.is_some()
+            }
+            #[cfg(not(feature = "kafka"))]
+            {
+                false
+            }
+        } {
+            path.push_str("kafka_");
+        } else if self.redis.is_some() {
+            path.push_str("redis_");
+        } else if self.cloudflare_queues.is_some() {
+            path.push_str("cloudflare_queues_");
+        }
+
+        path.trim_end_matches('_').to_string()
+    }
+
+    pub async fn create_full_streams_last_synced_block_path(
+        &self,
+        project_path: &Path,
+        contract_name: &str,
+    ) {
+        let streams_last_synced_block_path = self.get_streams_last_synced_block_path();
+        let base_path = Path::new(&streams_last_synced_block_path);
+        let path = base_path.join(contract_name).join("last-synced-blocks");
+        let full_path = project_path.join(path);
+
+        if !full_path.exists() {
+            fs::create_dir_all(&full_path).await.expect("Failed to create directory for stream");
+        }
+    }
+}

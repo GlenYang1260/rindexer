@@ -1,0 +1,113 @@
+prod_build:
+	RUSTFLAGS='-C target-cpu=native' cargo build --release --features jemalloc,reth
+new_no_code:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- new --path $(CURDIR)/../examples no-code
+new_rust:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- new --path $(CURDIR)/../examples rust
+start_indexer:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_demo_cli indexer
+start_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_demo_cli all
+start_graphql:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_demo_cli graphql
+playground_codegen_typings:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_rust_playground typings
+playground_codegen_indexer:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_rust_playground indexer
+codegen_graphql:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_demo_cli graphql --endpoint  http://0.0.0.0:5005/graphql
+add_contract:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- add --path $(CURDIR)/../examples/rindexer_demo_cli contract
+delete:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- delete --path $(CURDIR)/../examples/rindexer_demo_cli
+phantom_init:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- phantom --path $(CURDIR)/../examples/rindexer_demo_cli init
+phantom_clone:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- phantom --path $(CURDIR)/../examples/rindexer_demo_cli clone --contract-name RocketPoolETH --network ethereum
+phantom_compile:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- phantom --path $(CURDIR)/../examples/rindexer_demo_cli compile --contract-name RocketPoolETH --network ethereum
+phantom_deploy:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- phantom --path $(CURDIR)/../examples/rindexer_demo_cli deploy --contract-name RocketPoolETH --network ethereum
+help:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- phantom --help
+
+
+################################################################################
+# FACTORY INDEXING EXAMPLE COMMANDS
+################################################################################
+factory_indexing_codegen_typings:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_factory_indexing typings
+factory_indexing_codegen_indexer:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_factory_indexing indexer
+factory_indexing_codegen_graphql:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/rindexer_factory_indexing graphql
+
+################################################################################
+# LOCAL NONE CHECKED IN PROJECT COMMANDS
+################################################################################
+start_indexer_base_paint:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/base_paint indexer
+start_graphql_base_paint:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/base_paint graphql
+start_indexer_lens_mirrors:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/lens_mirrors indexer
+start_uniswap:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/uniswap_v3_factory all
+start_sophon:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/sophon_testnet_contract_deploy all
+start_indexer_issue:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../../rindexer-issue/smallIndexer indexer
+codegen_typings_lens:
+	cargo run -- codegen --path $(CURDIR)/../../lens-backend/crates/lens-indexer typings
+codegen_indexer_lens:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../../lens-backend/crates/indexer indexer
+start_uniswap_base:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/uniswap_v3_base indexer
+start_indexer_redis_stream:
+    RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/redis-stream indexer
+start_indexer_hyperwarp:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/hyperwarp indexer
+start_factory_indexing:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_factory_indexing all
+hyperwarp_codegen_typings:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/hyperevm typings
+hyperwarp_codegen_indexer:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release --features jemalloc -- codegen --path $(CURDIR)/../examples/hyperevm indexer
+start_cloudflare_indexer:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_cloudflare_queues indexer
+start_custom_indexer:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_demo_custom_indexing indexer
+start_custom_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_demo_custom_indexing all
+
+################################################################################
+# TABLES EXAMPLE COMMANDS
+################################################################################
+start_tables_erc20_balances_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_erc20_balances all
+start_tables_erc721_ownership_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_erc721_ownership all
+start_tables_erc20_allowances_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_erc20_allowances all
+start_tables_token_supply_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_token_supply all
+start_tables_governance_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_governance all
+start_tables_registry_delete_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_registry_delete all
+start_tables_factory_uniswap_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_factory_uniswap all
+start_tables_dex_pool_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_dex_pool all
+start_tables_view_calls_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_view_calls all
+start_tables_cron_chainlink_price_all:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_cron_chainlink_price all
+start_rindexer_liquidation_bot:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_liquidation_bot all
+start_rindexer_liquidation_bot_free_node:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/rindexer_liquidation_bot_free_node all
+start_tables_cron_historical_sync:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_cron_historical_sync all
+start_tables_factory_cron:
+	RUSTFLAGS='-C target-cpu=native' RUST_BACKTRACE='full' cargo run --release --features jemalloc -- start --path $(CURDIR)/../examples/tables_factory_cron all

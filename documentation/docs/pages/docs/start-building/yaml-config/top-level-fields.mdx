@@ -1,0 +1,108 @@
+# Top level fields
+
+The top-level fields of the YAML configuration file.
+
+## name
+
+The name of the project
+
+```yaml [rindexer.yaml]
+name: rETHIndexer // [!code focus]
+```
+
+## description
+
+:::info
+This field is optional
+:::
+
+The description of the project
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project // [!code focus]
+```
+
+## repository
+
+:::info
+This field is optional
+:::
+
+The repository of the project
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer // [!code focus]
+```
+
+## environment_path
+
+By default rindexer will load the environment variables from the `.env` file in the root of the project.
+
+You can override this by providing the path to the environment file you wish to use.
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+environment_path: "../../.env" // [!code focus]
+```
+
+## project_type
+
+The rindexer project type
+
+### no-code
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: no-code // [!code focus]
+```
+
+OR
+
+### rust
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+project_type: rust // [!code focus]
+```
+
+## config
+
+More advanced opt-in configuration parameters. [See more details](/docs/start-building/yaml-config/config).
+
+
+### no-code
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+config:
+  buffer: 2 // [!code focus]
+  callback_concurrency: 4 // [!code focus]
+```
+
+## timestamps
+
+Enable block timestamps for all events on all networks. Timestamps are `disabled` by default.
+
+Includes timestamps in all rindexer logs. Any logs with timestamps already included are ignored, and we
+try to be as efficient as possible when fetching timestamps by first using fixed ranges, then precalculated, and
+lastly fallback to RPC requests when required.
+
+Timestamps can also be opted into for specific events. [See more details](/docs/start-building/yaml-config/contracts).
+
+```yaml [rindexer.yaml]
+name: rETHIndexer
+description: My first rindexer project
+repository: https://github.com/joshstevens19/rindexer
+timestamps: true
+```

@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+    "core",
+    "cli",
+    "xtask",
+    "examples/rindexer_rust_playground",
+    "examples/rust_clickhouse",
+    "examples/clickhouse_factory_indexing",
+    "examples/rindexer_factory_indexing"
+]
